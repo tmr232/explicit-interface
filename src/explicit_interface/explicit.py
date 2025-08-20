@@ -162,7 +162,7 @@ def _implements_for(interface: type[Interface], for_: type):
 
 
 def implements(
-    interface_or_method: type[Interface] | Callable, *, for_: type | None = None
+    interface_or_method: type[Interface] | Callable, /, *, for_: type | None = None
 ):
     if for_ is not None:
         if not isinstance(interface_or_method, type) or not issubclass(
