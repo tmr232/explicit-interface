@@ -24,9 +24,13 @@ class InterfaceMeta(type):
             2. Create members for mapping from the interface names to the
                 obj methods.
             """
-            impl_mapping = _collect_implementation(impl, type(self))
+            if type(impl) in self.__known_implementations__:
+                impl_mapping = self.__known_implementations__[type(impl)]
+            else:
+                impl_mapping = _collect_implementation(type(impl), type(self))
+
             for name, value in impl_mapping.items():
-                setattr(self, name, value)
+                setattr(self, name, value.__get__(impl, type(impl)))
 
         # Create a new namespace with the modifications we need
         new_namespace = {}
@@ -45,11 +49,13 @@ class InterfaceMeta(type):
         new_namespace["__slots__"] = slots
         new_namespace["__init__"] = _interface_init
         new_namespace["__interface_definition__"] = interface_definition
+        new_namespace["__known_implementations__"] = {}
         return super().__new__(mcls, name, bases, new_namespace, **kwargs)
 
 
 class Interface(metaclass=InterfaceMeta):
     __interface_definition__:dict[str, Callable]
+    __known_implementations__:dict[type, dict[str, Callable]]
     def __init__(self, impl:Any): ...
 
 def _get_interface_definition(interface:type[Interface])->dict[str, Callable]:
@@ -58,7 +64,7 @@ def _get_interface_definition(interface:type[Interface])->dict[str, Callable]:
 def _typecheck_method(impl_method, interface_method)->bool:
     return True
 
-def _collect_implementation(impl, interface:type[Interface]):
+def _collect_implementation(impl:type, interface:type[Interface]):
     interface_definition = _get_interface_definition(interface)
     impl_mapping = {}
     for name, value in inspect.getmembers(impl):
@@ -103,7 +109,7 @@ def _implements_class(interface: type[Interface]):
     """
     # First, ensure we implement the interface!
     def _decorator[C:type](cls:C)->C:
-        _collect_implementation(cls, interface)
+        interface.__known_implementations__[cls] = _collect_implementation(cls, interface)
         return cls
     return _decorator
 
