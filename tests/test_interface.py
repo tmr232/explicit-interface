@@ -1,6 +1,6 @@
 import inspect
 import rich
-from types import FunctionType
+from types import FunctionType, MemberDescriptorType
 from abc import ABC
 from typing import Any, Iterator
 
@@ -10,6 +10,8 @@ class InterfaceMeta(type):
         # We know that all methods in an interface will be distinct, so there will
         # never be conflicts here.
         interface_definitions = {value:name for name, value in namespace.items() if inspect.isfunction(value)}
+        # We'll need the values later for type-checking, but for a first go, we can do with names alone.
+        interface_names = {name for name, value in namespace.items() if inspect.isfunction(value)}
         class _Adapter:
             def __init__(self, obj):
                 """
@@ -22,17 +24,26 @@ class InterfaceMeta(type):
                 # Currently we only support direct implementations, not implement-for.
                 obj_implementations = set()
                 for name, value in inspect.getmembers(obj):
+                    rich.print(name, value)
                     # If a method of the object implements an interface method,
                     # it will have that method registered in it's `__implements__`
                     # member.
                     member_implements = getattr(value, "__implements__", set())
-                    for registered_impl in member_implements:
-                        interface_name = interface_definitions.get(registered_impl)
-                        if interface_name:
-                            setattr(self, interface_name, value)
-                            obj_implementations.add(interface_name)
-
-                if set(interface_definitions.values()) != set(obj_implementations):
+                    for marker in member_implements:
+                        # First, ensure we're checking the right class
+                        if not isinstance(marker, MemberDescriptorType):
+                            raise TypeError(f"Expected member_descriptor, got {type(marker)}")
+                        if marker.__objclass__ != type(self):
+                            # Not a marker for this interface. Ignore it.
+                            continue
+                        if marker.__name__ not in interface_names:
+                            # This should _never_ happen.
+                            raise NameError(f"Where the fuck did that come from? {marker.__name__}")
+                        # Need to use names here, as we have a member descriptor and not the actual function!
+                        setattr(self, marker.__name__, value)
+                        obj_implementations.add(marker.__name__)
+                    rich.print(obj_implementations)
+                if interface_names != obj_implementations:
                     raise TypeError(f"Interface not implemented fully! {type(obj)}")
 
         # Create a new namespace with the modifications we need
@@ -99,5 +110,10 @@ class _:
     quack = Dog.bark
 
 def test_fully_explicit():
-    duck = Duck(Mallard())
+    mallard = Mallard()
+    rich.inspect(mallard.quack, all=True)
+    for m in mallard.quack.__implements__:
+        rich.inspect(m, all=True)
+        print(m.__objclass__)
+    duck = Duck(mallard)
     duck.quack()
