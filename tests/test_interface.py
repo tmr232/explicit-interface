@@ -1,5 +1,7 @@
 from __future__ import annotations
 import inspect
+
+import pytest
 import rich
 from types import FunctionType, MemberDescriptorType
 from typing import Any, Callable
@@ -83,6 +85,11 @@ def _collect_implementation(impl, interface:type[Interface]):
                 raise TypeError(f"Method mismatch!")
             # Need to use names here, as we have a member descriptor and not the actual function!
             impl_mapping[marker.__name__] = value
+
+    # Make sure we implemented everything!
+    if set(interface_definition.keys()) != set(impl_mapping.keys()):
+        raise TypeError("Missing methods!")
+
     return impl_mapping
 
 
@@ -94,8 +101,10 @@ def _implements_class(interface: type[Interface]):
     Additionally, we wanna ensure it implements the interface.
     """
     # First, ensure we implement the interface!
-
-    return lambda x: x
+    def _decorator[C:type](cls:C)->C:
+        _collect_implementation(cls, interface)
+        return cls
+    return _decorator
 
 
 def _implements_method(method: Callable):
@@ -153,3 +162,33 @@ def test_fully_explicit():
     mallard = Mallard()
     duck = Duck(mallard)
     duck.quack()
+
+
+class TestExplicit:
+    @pytest.fixture(name="IDog")
+    def _idog_fixture(self):
+        class IDog(Interface):
+            def bark(self): ...
+            def bite(self): ...
+        return IDog
+
+    def test_full_implementation(self, IDog:type[IDog]):
+        @implements(IDog)
+        class Dog:
+            @implements(IDog.bark)
+            def bark(self):
+                pass
+            @implements(IDog.bite)
+            def bite(self):
+                pass
+
+        d = IDog(Dog())
+        d.bark()
+
+    def test_partial_implementation(self, IDog:type[IDog]):
+        with pytest.raises(TypeError):
+            @implements(IDog)
+            class PartialDog:
+                @implements(IDog.bark)
+                def bark(self):
+                    pass
