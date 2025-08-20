@@ -72,6 +72,8 @@ class _InterfaceMeta(type):
 
 
 class Interface(metaclass=_InterfaceMeta):
+    """Baseclass for defining explicit interfaces."""
+
     # The contents here are strictly for typechecking.
     __interface_definition__: dict[str, Callable]
     __known_implementations__: dict[type, _KnownImpl]
@@ -121,9 +123,11 @@ def _collect_implementation(impl: type, interface: type[Interface]):
 
 
 def _implements_class(interface: type[Interface]):
-    """Pre-register an interface implementation.
+    """Registers a class as an interface implementation.
 
-    Also ensures that the class implements the interface.
+    Additionally, ensures that the implementation is full.
+
+    This function is not necessary, but makes things more explicit.
     """
 
     def _decorator[C: type](cls: C) -> C:
@@ -135,6 +139,8 @@ def _implements_class(interface: type[Interface]):
 
 
 def _implements_for(interface: type[Interface], for_: type):
+    """Registers an interface adapter for a type."""
+
     def _decorator(adapter: type):
         # 0. Ensure no custom `__init__`.
         if adapter.__init__ != object.__init__:  # type: ignore[misc]
@@ -151,6 +157,8 @@ def _implements_for(interface: type[Interface], for_: type):
 
 
 def _implements_method(method: Callable):
+    """Marks a method with the interface method it's implementing."""
+
     def _decorator[F: FunctionType](f: F) -> F:
         setattr(
             f,
@@ -163,8 +171,28 @@ def _implements_method(method: Callable):
 
 
 def implements(
-    interface_or_method: type[Interface] | Callable, /, *, for_: type | None = None
+    interface_or_method: type[Interface] | Callable,
+    /,
+    *,
+    for_: type | None = None,
 ):
+    """Declares an implementation of an interface.
+
+    When used on a method, declares the interface-method that the
+    method implements.
+
+    When used on a class, declares that the class implements the interface.
+
+    When used on a class with the `for_` keyword, declares that the
+    class is an interface adapter for the `for_` class.
+
+    Args:
+        interface_or_method: The interface or method being implemented
+        for_: If provided, the class for which this is an adapter
+
+    Returns:
+        A decorator for declaring interface implementations.
+    """
     if for_ is not None:
         if not isinstance(interface_or_method, type) or not issubclass(
             interface_or_method, Interface
