@@ -2,13 +2,13 @@
 
 set windows-shell := ["pwsh", "-c"]
 
-@default:
-    just --summary
-
+@_:
+    just --list
 
 @format:
-    ruff check --fix .
-    ruff format .
+    uv run ruff check --fix .
+    uv run ruff format .
 
+# Run tests
 @test:
-    pytest tests
+    uv run pytest tests
