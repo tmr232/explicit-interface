@@ -70,6 +70,7 @@ class TestExplicit:
 
     def test_partial_implementation(self, IDog: type[IDog]):
         with pytest.raises(TypeError):
+
             @implements(IDog)
             class PartialDog:
                 @implements(IDog.bark)
@@ -129,3 +130,20 @@ class TestImplicit:
 
         d = IDog(Dog())
         d.bark()
+
+
+class Speaker(Interface):
+    def speak(self, words): ...
+
+
+def test_with_args():
+    @implements(Speaker)
+    class Greeter:
+        @implements(Speaker.speak)
+        def greet(self, someone):
+            return f"Hello, {someone}!"
+
+    greeter = Greeter()
+    speaker = Speaker(greeter)
+    someone = "World"
+    assert greeter.greet(someone) == speaker.speak(someone)
