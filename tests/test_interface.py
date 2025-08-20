@@ -54,11 +54,9 @@ class InterfaceMeta(type):
                             )
                         # Need to use names here, as we have a member descriptor and not the actual function!
                         setattr(self, marker.__name__, value)
-                        rich.print(marker)
                         obj_implementations.add(marker.__name__)
 
                 if interface_names != obj_implementations:
-                    rich.print(interface_names - obj_implementations)
                     raise TypeError(f"Interface not implemented fully! {type(obj)}")
 
         # Create a new namespace with the modifications we need
