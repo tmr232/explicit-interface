@@ -7,7 +7,8 @@ authors = [
     { name = "Tamir Bahar", email = "tamir.bahar@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+]
 
 [project.scripts]
 explicit-interface = "explicit_interface:main"
@@ -21,4 +22,6 @@ dev = [
     "mypy>=1.17.1",
     "pytest>=8.4.1",
     "ruff>=0.12.9",
+    "rich>=14.1.0",
+
 ]
