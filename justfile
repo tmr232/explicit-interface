@@ -10,5 +10,5 @@ set windows-shell := ["pwsh", "-c"]
     uv run ruff format .
 
 # Run tests
-@test:
-    uv run pytest tests
+@test *args:
+    uv run pytest tests {{args}}
