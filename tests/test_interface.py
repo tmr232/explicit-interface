@@ -38,7 +38,7 @@ class InterfaceMeta(type):
         interface_definition = {
             name: value
             for name, value in namespace.items()
-            if inspect.isfunction(value)
+            if inspect.isfunction(value) and name != "__init__"
         }
 
         slots = tuple(interface_definition.keys())
@@ -50,6 +50,7 @@ class InterfaceMeta(type):
 
 class Interface(metaclass=InterfaceMeta):
     __interface_definition__:dict[str, Callable]
+    def __init__(self, impl:Any): ...
 
 def _get_interface_definition(interface:type[Interface])->dict[str, Callable]:
     return interface.__interface_definition__
@@ -165,12 +166,13 @@ def test_fully_explicit():
 
 
 class TestExplicit:
+    class IDog(Interface):
+        def bark(self): ...
+        def bite(self): ...
+
     @pytest.fixture(name="IDog")
     def _idog_fixture(self):
-        class IDog(Interface):
-            def bark(self): ...
-            def bite(self): ...
-        return IDog
+        return self.IDog
 
     def test_full_implementation(self, IDog:type[IDog]):
         @implements(IDog)
@@ -192,3 +194,33 @@ class TestExplicit:
                 @implements(IDog.bark)
                 def bark(self):
                     pass
+
+    def test_different_name(self, IDog:type[IDog]):
+        @implements(IDog)
+        class Dog:
+            @implements(IDog.bark)
+            def speak(self):
+                pass
+            @implements(IDog.bite)
+            def bite(self):
+                pass
+        d = IDog(Dog())
+        d.bark()
+
+    def test_has_other_methods(self, IDog:type[IDog]):
+        @implements(IDog)
+        class Dog:
+            def __init__(self):
+                pass
+
+            @implements(IDog.bark)
+            def bark(self):
+                pass
+
+            @implements(IDog.bite)
+            def bite(self):
+                pass
+
+            def walk(self):
+                pass
+
