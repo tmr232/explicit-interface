@@ -29,7 +29,7 @@ class _InterfaceMeta(type):
             """
             # If we're given an adapted type, we can just use it!
             if type(impl) is type(self):
-                for name in self.__slots__:
+                for name in self.__slots__:  # type: ignore[attr-defined]
                     setattr(self, name, getattr(impl, name))
                 return
 
