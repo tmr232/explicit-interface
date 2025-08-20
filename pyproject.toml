@@ -1,10 +1,10 @@
 [project]
 name = "explicit-interface"
 version = "0.1.0"
-description = "Add your description here"
+description = "Explicitly implemented interfaces"
 readme = "README.md"
 authors = [
-    { name = "Tamir Bahar", email = "tamir.bahar@gmail.com" }
+    { name = "Tamir Bahar"}
 ]
 requires-python = ">=3.13"
 dependencies = [

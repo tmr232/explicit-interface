@@ -6,7 +6,7 @@ If we add slots for a non-existing member of a class, it'll be a `member_descrip
 ## Example!
 
 ```python
-from explicit_interface.explicit import Interface, implements
+from explicit_interface._explicit import Interface, implements
 
 
 class Duck(Interface):

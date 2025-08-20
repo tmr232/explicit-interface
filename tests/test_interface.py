@@ -1,6 +1,6 @@
 import pytest
 
-from explicit_interface.explicit import Interface, implements
+from explicit_interface import Interface, implements
 
 
 class IDog(Interface):
