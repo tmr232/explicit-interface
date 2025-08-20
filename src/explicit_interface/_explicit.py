@@ -20,13 +20,6 @@ class _InterfaceMeta(type):
         # never be conflicts here.
 
         def _interface_init(self: Interface, impl):
-            """
-            1. Ensure the obj has an implementation.
-                This can be by being registered, or having
-                registration markers on all for all the interface methods
-            2. Create members for mapping from the interface names to the
-                obj methods.
-            """
             # If we're given an adapted type, we can just use it!
             if type(impl) is type(self):
                 for name in self.__slots__:  # type: ignore[attr-defined]
@@ -34,12 +27,16 @@ class _InterfaceMeta(type):
                 return
 
             if type(impl) in self.__known_implementations__:
+                # If the mapping for the given impl already exists, we use it.
                 known_impl = self.__known_implementations__[type(impl)]
             else:
+                # Otherwise, we create the mapping from scratch
                 impl_mapping = _collect_implementation(type(impl), type(self))
                 known_impl = _KnownImpl(impl_mapping)
                 self.__known_implementations__[type(impl)] = known_impl
 
+            # Once we have the mapping, we bind all the methods
+            # and populate the interface.
             adapter = None
             if known_impl.adapter is not None:
                 adapter = known_impl.adapter()
@@ -65,6 +62,7 @@ class _InterfaceMeta(type):
             if inspect.isfunction(value) and name != "__init__"
         }
 
+        # We need slots to ensure we have member-descriptors for our interface objects.
         slots = tuple(interface_definition.keys())
         new_namespace["__slots__"] = slots
         new_namespace["__init__"] = _interface_init
@@ -74,6 +72,7 @@ class _InterfaceMeta(type):
 
 
 class Interface(metaclass=_InterfaceMeta):
+    # The contents here are strictly for typechecking.
     __interface_definition__: dict[str, Callable]
     __known_implementations__: dict[type, _KnownImpl]
 
@@ -85,6 +84,7 @@ def _get_interface_definition(interface: type[Interface]) -> dict[str, Callable]
 
 
 def _typecheck_method(impl_method, interface_method) -> bool:
+    # TODO: Implement typechecking!
     return True
 
 
@@ -121,14 +121,11 @@ def _collect_implementation(impl: type, interface: type[Interface]):
 
 
 def _implements_class(interface: type[Interface]):
-    """
-    Here we want to create the name mapping in advance, to save time
-    on class instantiation.
+    """Pre-register an interface implementation.
 
-    Additionally, we wanna ensure it implements the interface.
+    Also ensures that the class implements the interface.
     """
 
-    # First, ensure we implement the interface!
     def _decorator[C: type](cls: C) -> C:
         impl_mapping = _collect_implementation(cls, interface)
         interface.__known_implementations__[cls] = _KnownImpl(impl_mapping)

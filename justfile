@@ -9,11 +9,13 @@ set windows-shell := ["pwsh", "-c"]
     uv run ruff check --fix .
     uv run ruff format .
 
-@lint:
+@lint: format
+    uv run mypy .
+
+@ci:
     uv run ruff check .
     uv run ruff format --check .
     uv run mypy .
-
 
 # Run tests
 @test *args:
