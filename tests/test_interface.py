@@ -70,7 +70,6 @@ class TestExplicit:
 
     def test_partial_implementation(self, IDog: type[IDog]):
         with pytest.raises(TypeError):
-
             @implements(IDog)
             class PartialDog:
                 @implements(IDog.bark)
@@ -107,3 +106,26 @@ class TestExplicit:
 
             def walk(self):
                 pass
+
+
+class TestImplicit:
+    class IDog(Interface):
+        def bark(self): ...
+        def bite(self): ...
+
+    @pytest.fixture(name="IDog")
+    def _idog_fixture(self):
+        return self.IDog
+
+    def test_full_implementation(self, IDog: type[IDog]):
+        class Dog:
+            @implements(IDog.bark)
+            def bark(self):
+                pass
+
+            @implements(IDog.bite)
+            def bite(self):
+                pass
+
+        d = IDog(Dog())
+        d.bark()
