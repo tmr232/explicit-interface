@@ -137,6 +137,22 @@ def _implements_class(interface: type[Interface]):
     return _decorator
 
 
+def _implements_for(interface: type[Interface], for_: type):
+    def _decorator(adapter: type):
+        # 0. Ensure no custom `__init__`.
+        if adapter.__init__ != object.__init__:  # type: ignore[misc]
+            # We don't provide it any arguments, so this saves us some
+            raise TypeError("Adapter objects should not have `__init__` methods.")
+        # 1. Create mapping
+        impl_mapping = _collect_implementation(adapter, interface)
+        # 2. Register mapping
+        interface.__known_implementations__[for_] = _KnownImpl(
+            impl_mapping, adapter=adapter
+        )
+
+    return _decorator
+
+
 def _implements_method(method: Callable):
     def _decorator[F: FunctionType](f: F) -> F:
         setattr(
@@ -145,18 +161,6 @@ def _implements_method(method: Callable):
             getattr(f, _IMPL_MARKERS_ATTR, set()) | {method},
         )
         return f
-
-    return _decorator
-
-
-def _implements_for(interface: type[Interface], for_: type):
-    def _decorator(adapter: type):
-        # 1. Create mapping
-        impl_mapping = _collect_implementation(adapter, interface)
-        # 2. Register mapping
-        interface.__known_implementations__[for_] = _KnownImpl(
-            impl_mapping, adapter=adapter
-        )
 
     return _decorator
 
