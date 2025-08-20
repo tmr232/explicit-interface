@@ -27,6 +27,12 @@ class _InterfaceMeta(type):
             2. Create members for mapping from the interface names to the
                 obj methods.
             """
+            # If we're given an adapted type, we can just use it!
+            if type(impl) is type(self):
+                for name in self.__slots__:
+                    setattr(self, name, getattr(impl, name))
+                return
+
             if type(impl) in self.__known_implementations__:
                 known_impl = self.__known_implementations__[type(impl)]
             else:

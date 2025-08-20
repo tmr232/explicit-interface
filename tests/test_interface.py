@@ -153,3 +153,15 @@ class TestImplementFor:
         class _:
             bark = Dog.speak
             bite = Dog.eat
+
+
+def test_interface_from_same_interface():
+    class Iface(Interface):
+        def method(self): ...
+
+    class Impl:
+        @implements(Iface.method)
+        def method(self):
+            pass
+
+    Iface(Iface(Impl()))
