@@ -75,5 +75,11 @@ interact_with_duck(human)    # Walks like a human
                              # Talks like a human
 ```
 
+## Installation
+
+```shell
+uv add "explicit_interface @ git+https://github.com/tmr232/explicit-interface" 
+```
+
 [ABC]: https://docs.python.org/3/library/abc.html#abc.ABC
 [Protocol]: https://docs.python.org/3/library/typing.html#typing.Protocol
